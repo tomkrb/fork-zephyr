@@ -1,0 +1,25 @@
+identifier: feather_v2/esp32/procpu
+name: Feather_v2
+type: mcu
+arch: xtensa
+toolchain:
+  - zephyr
+supported:
+  - adc
+  - dac
+  - gpio
+  - i2c
+  - watchdog
+  - uart
+  - nvs
+  - pwm
+  - dac
+  - spi
+  - counter
+  - entropy
+  - input
+testing:
+  ignore_tags:
+    - net
+    - bluetooth
+vendor: espressif
