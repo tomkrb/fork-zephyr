@@ -1,0 +1,7 @@
+# Copyright (c) 2023 Espressif Systems (Shanghai) Co., Ltd.
+# SPDX-License-Identifier: Apache-2.0
+
+config BOARD_FEATHER_V2
+	select SOC_ESP32_PICO_V3_02
+	select SOC_ESP32_PROCPU if BOARD_FEATHER_V2_ESP32_PROCPU
+	select SOC_ESP32_APPCPU if BOARD_FEATHER_V2_ESP32_APPCPU
