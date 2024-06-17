@@ -17,21 +17,21 @@
 	aliases {
 		uart-0 = &uart0;
 		i2c-0 = &i2c0;
-		sw0 = &button0;
+		// sw0 = &button0;
 		watchdog0 = &wdt0;
 		led0 = &led0;
 	};
 
 
 	
-	buttons {
-		compatible = "gpio-keys";
-		button0: button_0 {
-			gpios = <&gpio1 6 GPIO_ACTIVE_LOW>;
-			label = "Push button switch";
-			zephyr,code = <INPUT_KEY_0>;
-		};
-	};
+	// buttons {
+	// 	compatible = "gpio-keys";
+	// 	button0: button_0 {
+	// 		gpios = <&gpio1 6 GPIO_ACTIVE_LOW>;
+	// 		label = "Push button switch";
+	// 		zephyr,code = <INPUT_KEY_0>;
+	// 	};
+	// };
 
 	leds {
 		compatible = "gpio-leds";
@@ -189,7 +189,3 @@
 		};
 	};
 };
-
-
-/* Required by the ssd1306_128x64 shield which enables the OLED display */
-arduino_i2c: &i2c0 {};
