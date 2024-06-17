@@ -1,0 +1,6 @@
+# Copyright (c) 2019 Linaro Limited
+# SPDX-License-Identifier: Apache-2.0
+
+config SHIELD_ADAFRUIT_2900_OLED
+	def_bool $(shields_list_contains,shield_adafruit_2900_oled)
+
