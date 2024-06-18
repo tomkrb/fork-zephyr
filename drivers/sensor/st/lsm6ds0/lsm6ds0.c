@@ -403,7 +403,7 @@ static int lsm6ds0_init_chip(const struct device *dev)
 		LOG_DBG("failed reading chip id");
 		return -EIO;
 	}
-	if (chip_id != LSM6DS0_VAL_WHO_AM_I) {
+	if ((chip_id != LSM6DS0_VAL_WHO_AM_I) && (chip_id != LSM6DSOX_VAL_WHO_AM_I)) {
 		LOG_DBG("invalid chip id 0x%x", chip_id);
 		return -EIO;
 	}
