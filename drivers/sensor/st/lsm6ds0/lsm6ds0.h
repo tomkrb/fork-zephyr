@@ -68,7 +68,8 @@
 #define LSM6DS0_SHIFT_INT_CTRL_INT_DRDY_XL	0
 
 #define LSM6DS0_REG_WHO_AM_I                    0x0F
-#define LSM6DS0_VAL_WHO_AM_I			0x68
+#define LSM6DS0_VAL_WHO_AM_I				0x68 
+#define LSM6DSOX_VAL_WHO_AM_I				0x6C
 
 #define LSM6DS0_REG_CTRL_REG1_G                 0x10
 #define LSM6DS0_MASK_CTRL_REG1_G_ODR_G		(BIT(7) | BIT(6) | BIT(5))
