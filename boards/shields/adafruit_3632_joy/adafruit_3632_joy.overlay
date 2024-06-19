@@ -1,0 +1,13 @@
+/*
+ * Copyright (c) 2019 PHYTEC Messtechnik GmbH
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+
+&i2c0 {
+	joywing@49 {
+		compatible = "adafruit,seesaw";
+		reg = <0x49>;
+	};
+};
