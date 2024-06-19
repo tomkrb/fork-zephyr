@@ -1,0 +1,12 @@
+# Copyright (c) 2016 Intel Corporation
+# SPDX-License-Identifier: Apache-2.0
+
+menuconfig SEESAW
+	bool "Adafruit Seesaw"
+	default y
+	depends on DT_HAS_ADAFRUIT_SEESAW_ENABLED
+	select I2C
+	help
+	  Enable driver for the Adafruit Seesaw controllers
+
+endif # SEESAW
