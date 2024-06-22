@@ -1,10 +1,7 @@
-# Copyright (c) 2019 Linaro Limited
+# Copyright (c) 2024 Trada AS
 # SPDX-License-Identifier: Apache-2.0
 
 if SHIELD_ADAFRUIT_3632_JOY
-
-config SEESAW
-    default y
 
 config JOYWING_X_OFFSET
 	int "Joystick X axis offset"

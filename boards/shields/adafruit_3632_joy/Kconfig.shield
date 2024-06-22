@@ -1,4 +1,4 @@
-# Copyright (c) 2019 Linaro Limited
+# Copyright (c) 2024 Trada AS
 # SPDX-License-Identifier: Apache-2.0
 
 config SHIELD_ADAFRUIT_3632_JOY
