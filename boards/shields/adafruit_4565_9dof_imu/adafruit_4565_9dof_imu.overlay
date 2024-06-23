@@ -6,8 +6,8 @@
 
 
 &i2c0 {
-	lsm6ds0@6a {
-		compatible = "st,lsm6ds0";
+	lsm6dso@6a {
+		compatible = "st,lsm6dso";
 		reg = <0x6a>;
 	};
 };
