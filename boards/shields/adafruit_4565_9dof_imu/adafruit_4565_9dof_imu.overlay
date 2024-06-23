@@ -5,9 +5,16 @@
  */
 
 
+ #include <zephyr/dt-bindings/sensor/lsm6dso.h>
+
 &i2c0 {
 	lsm6dso@6a {
 		compatible = "st,lsm6dso";
 		reg = <0x6a>;
-	};
+		accel-pm = <LSM6DSO_DT_XL_HP_MODE>;
+		accel-range = <LSM6DSO_DT_FS_2G>;
+		accel-odr = <LSM6DSO_DT_ODR_52Hz>;
+		gyro-pm = <LSM6DSO_DT_GY_HP_MODE>;
+		gyro-range = <LSM6DSO_DT_FS_2000DPS>;
+		gyro-odr = <LSM6DSO_DT_ODR_6667Hz>;	};
 };
