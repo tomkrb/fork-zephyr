@@ -2,15 +2,14 @@
  */
 
 /*
- * Copyright (c) Trada AS
- *
+ * Copyright (c) 2024 Trada AS
  * SPDX-License-Identifier: Apache-2.0
  * 
  * Based on doc from:
  * https://learn.adafruit.com/adafruit-seesaw-atsamd09-breakout/reading-and-writing-data
  */
 
-#define DT_DRV_COMPAT adafruit_seasaw
+#define DT_DRV_COMPAT adafruit_seesaw
 
 #include <zephyr/drivers/sensor.h>
 #include <zephyr/kernel.h>
@@ -22,110 +21,31 @@
 
 #include "seesaw.h"
 
-LOG_MODULE_REGISTER(SEESAW, CONFIG_SENSOR_LOG_LEVEL);
+LOG_MODULE_REGISTER(seesaw_sensor, CONFIG_SENSOR_LOG_LEVEL);
 
-static inline int seesaw_reboot(const struct device *dev)
+static inline int seesaw_init_chip(const struct device *dev)
 {
 	const struct seesaw_config *config = dev->config;
 
-	// if (i2c_reg_update_byte_dt(&config->i2c, LSM6DS0_REG_CTRL_REG8,
-	// 			   LSM6DS0_MASK_CTRL_REG8_BOOT,
-	// 			   1 << LSM6DS0_SHIFT_CTRL_REG8_BOOT) < 0) {
-	// 	return -EIO;
-	// }
+	LOG_DBG("Initializing seesaw device %s", config->i2c.bus->name);
+	
+	/* Set all registers to default values */
+	if (i2c_reg_write_byte_dt(&config->i2c, SEESAW_STATUS_SWRST, 0xFF)) {
+		return -EIO;
+	}
 
-	// k_busy_wait(USEC_PER_MSEC * 50U);
+	uint8_t reg;
+	reg = SEESAW_STATUS_VERSION;
+	if (i2c_write_read_dt(&config->i2c, &reg, 1,
+					(void *)&config->version, 4) < 0) {
+		return -EIO;
+	}
 
-	return 0;
-}
-
-
-static int seesaw_sample_fetch(const struct device *dev,
-				enum sensor_channel chan)
-{
-	// __ASSERT_NO_MSG(chan == SENSOR_CHAN_ALL ||
-	// 		chan == SENSOR_CHAN_ACCEL_XYZ ||
-	// 		chan == SENSOR_CHAN_GYRO_XYZ);
-
-	// switch (chan) {
-	// case SENSOR_CHAN_ACCEL_XYZ:
-	// 	lsm6ds0_sample_fetch_accel(dev);
-	// 	break;
-	// case SENSOR_CHAN_GYRO_XYZ:
-	// 	lsm6ds0_sample_fetch_gyro(dev);
-	// 	break;
-	// case SENSOR_CHAN_ALL:
-	// 	lsm6ds0_sample_fetch_accel(dev);
-	// 	lsm6ds0_sample_fetch_gyro(dev);
-	// 	break;
-	// default:
-	// 	return -ENOTSUP;
-	// }
-
-	return 0;
-}
-
-static inline void seesaw_accel_convert(struct sensor_value *val, int raw_val,
-					 float scale)
-{
-	double dval;
-
-	dval = (double)(raw_val) * (double)scale / 32767.0;
-	val->val1 = (int32_t)dval;
-	val->val2 = ((int32_t)(dval * 1000000)) % 1000000;
-}
-
-static int seesaw_channel_get(const struct device *dev,
-			       enum sensor_channel chan,
-			       struct sensor_value *val)
-{
-	// struct seesaw_data *data = dev->data;
-
-	// switch (chan) {
-	// case SENSOR_CHAN_ACCEL_X:
-	// case SENSOR_CHAN_ACCEL_Y:
-	// case SENSOR_CHAN_ACCEL_Z:
-	// case SENSOR_CHAN_ACCEL_XYZ:
-	// 	lsm6dso_accel_channel_get(chan, val, data);
-	// 	break;
-	// case SENSOR_CHAN_GYRO_X:
-	// case SENSOR_CHAN_GYRO_Y:
-	// case SENSOR_CHAN_GYRO_Z:
-	// case SENSOR_CHAN_GYRO_XYZ:
-	// 	lsm6dso_gyro_channel_get(chan, val, data);
-	// 	break;
-	// default:
-	// 	return -ENOTSUP;
-	// }
-
-	return 0;
-}
-
-
-static const struct sensor_driver_api seesaw_api_funcs = {
-	.sample_fetch = seesaw_sample_fetch,
-	.channel_get = seesaw_channel_get,
-};
-
-static int lsm6ds0_init_chip(const struct device *dev)
-{
-	// const struct seesaw_config *config = dev->config;
-	// uint8_t chip_id;
-
-	// if (seesaw_reboot(dev) < 0) {
-	// 	LOG_DBG("failed to reboot device");
-	// 	return -EIO;
-	// }
-
-	// if (i2c_reg_read_byte_dt(&config->i2c, LSM6DS0_REG_WHO_AM_I, &chip_id) < 0) {
-	// 	LOG_DBG("failed reading chip id");
-	// 	return -EIO;
-	// }
-	// if ((chip_id != LSM6DS0_VAL_WHO_AM_I) && (chip_id != LSM6DSOX_VAL_WHO_AM_I)) {
-	// 	LOG_DBG("invalid chip id 0x%x", chip_id);
-	// 	return -EIO;
-	// }
-	// LOG_DBG("chip id 0x%x", chip_id);
+	reg = SEESAW_STATUS_OPTIONS;
+	if (i2c_write_read_dt(&config->i2c, &reg, 1,
+					(void *)&config->options, 4) < 0) {
+		return -EIO;
+	}
 
 	return 0;
 }
@@ -147,6 +67,135 @@ static int seesaw_init(const struct device *dev)
 	return 0;
 }
 
+uint32_t seesaw_temperature_get(const struct device *dev)
+{
+	const struct seesaw_config *config = dev->config;
+	uint8_t temp[4], reg;
+
+	reg = SEESAW_STATUS_TEMP;
+	if (i2c_write_read_dt(&config->i2c, &reg, 1, temp, 4) < 0) {
+		return -EIO;
+	}
+
+	return sys_get_le32(temp);
+}
+
+uint16_t seesaw_adc_channel_read(const struct device *dev, uint8_t channel)
+{
+	const struct seesaw_config *config = dev->config;
+	uint8_t adc[2], reg;
+
+	reg = SEESAW_ADC_FUNCTION_CHANNEL_0 + channel;
+
+	if (channel >= SEESAW_ADC_NUMBER_OF_CHANNELS) {
+		return -EINVAL;
+	}
+
+	if (i2c_write_read_dt(&config->i2c, &reg, 1, adc, 2) < 0) {
+		return -EIO;
+	}
+
+	return sys_get_le16(adc);	
+}
+
+void i2c_write_32bit_register( const struct device *dev, uint8_t reg, uint32_t data)
+{
+	uint8_t buf[5];
+	const struct seesaw_config *config = dev->config;
+
+	buf[0] = reg;
+	sys_put_le32(data, &buf[1]);
+
+	i2c_write_dt(&config->i2c, buf, 5);
+}
+
+void seesaw_gpio_pin_set_input(const struct device *dev, uint8_t pin)
+{
+	uint32_t data = 1 << pin;
+
+	i2c_write_32bit_register(dev, SEESAW_GPIO_FUNCTION_DIRCLR, data);
+}
+
+void seesaw_gpio_pin_set_output(const struct device *dev, uint8_t pin)
+{
+	const struct seesaw_config *config = dev->config;
+	uint32_t data = 1 << pin;
+
+	i2c_write_32bit_register(dev, SEESAW_GPIO_FUNCTION_DIRSET, data);
+}
+
+void seesaw_gpio_pin_set(const struct device *dev, uint8_t pin)
+{
+	const struct seesaw_config *config = dev->config;
+	uint32_t data = 1 << pin;
+
+	i2c_write_32bit_register(dev, SEESAW_GPIO_FUNCTION_SET, data);
+}
+
+void seesaw_gpio_pin_clear(const struct device *dev, uint8_t pin)
+{
+	const struct seesaw_config *config = dev->config;
+	uint32_t data = 1 << pin;
+
+	i2c_write_32bit_register(dev, SEESAW_GPIO_FUNCTION_CLR, data);
+}
+
+void seesaw_gpio_pin_toggle(const struct device *dev, uint8_t pin)
+{
+	const struct seesaw_config *config = dev->config;
+	uint32_t data = 1 << pin;
+
+	i2c_write_32bit_register(dev, SEESAW_GPIO_FUNCTION_TOGGLE, data);
+}
+
+uint32_t seesaw_gpio_sample_fetch(const struct device *dev)
+{
+	const struct seesaw_config *config = dev->config;
+	struct seesaw_data *data = dev->data;
+	uint8_t gpio[4], reg;
+
+	reg = SEESAW_GPIO_FUNCTION_GPIO;
+
+	if (i2c_write_read_dt(&config->i2c, &reg, 1, gpio, 4) < 0) {
+		return -EIO;
+	}
+
+	data->sample_gpio = sys_get_le32(gpio);
+
+	return data->sample_gpio;
+}
+
+bool seesaw_gpio_pin_get(const struct device *dev, uint8_t pin)
+{
+	const struct seesaw_data *data = dev->data;
+
+	return data->sample_gpio & BIT(pin);
+}
+
+void seesaw_gpio_pin_pullup_enable(const struct device *dev, uint8_t pin)
+{
+	const struct seesaw_config *config = dev->config;
+	uint32_t data = 1 << pin;
+
+	i2c_write_32bit_register(dev, SEESAW_GPIO_FUNCTION_PULLENSET, data);
+}
+
+void seesaw_gpio_pin_pulldown_enable(const struct device *dev, uint8_t pin)
+{
+	const struct seesaw_config *config = dev->config;
+	uint32_t data = 1 << pin;
+
+	i2c_write_32bit_register(dev, SEESAW_GPIO_FUNCTION_PULLENCLR, data);
+}
+
+void seesaw_gpio_pin_pull_disable(const struct device *dev, uint8_t pin)
+{
+	const struct seesaw_config *config = dev->config;
+	uint32_t data = 1 << pin;
+
+	i2c_write_32bit_register(dev, SEESAW_GPIO_FUNCTION_PULLENCLR, data);
+}
+
 #define SEESAW_DEFINE(inst)								\
 	static struct seesaw_data seesaw_data_##inst;					\
 											\
@@ -156,6 +205,6 @@ static int seesaw_init(const struct device *dev)
 											\
 	SENSOR_DEVICE_DT_INST_DEFINE(inst, seesaw_init, NULL,				\
 			      &seesaw_data_##inst, &seesaw_config_##inst, POST_KERNEL,\
-			      CONFIG_SENSOR_INIT_PRIORITY, &seesaw_api_funcs);		\
+			      CONFIG_SENSOR_INIT_PRIORITY, NULL);		\
 
 DT_INST_FOREACH_STATUS_OKAY(SEESAW_DEFINE)

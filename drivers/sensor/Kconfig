@@ -82,6 +82,7 @@ config SENSOR_INFO
 comment "Device Drivers"
 
 # zephyr-keep-sorted-start
+source "drivers/sensor/adafruit/Kconfig"
 source "drivers/sensor/adi/Kconfig"
 source "drivers/sensor/ams/Kconfig"
 source "drivers/sensor/aosong/Kconfig"
