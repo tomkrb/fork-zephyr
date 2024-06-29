@@ -23,27 +23,61 @@
 
 LOG_MODULE_REGISTER(seesaw_sensor, CONFIG_SENSOR_LOG_LEVEL);
 
+static int read_register(const struct device *dev, uint8_t channel, uint8_t reg, void *data, size_t size)
+{
+	const struct seesaw_config *config = dev->config;
+	
+	if (i2c_reg_write_byte_dt(&config->i2c, channel, reg)) {
+		LOG_ERR("Failed to write channel 0x%02X, register 0x%02X", channel, reg);
+		return -EIO;
+	}
+	k_sleep(K_USEC(50));
+	if (i2c_read_dt(&config->i2c, (uint8_t *)data, size) < 0) {
+		LOG_ERR("Failed to read %zu bytes from channel 0x%02X, register 0x%02X", size, channel, reg);
+		return -EIO;
+	}
+
+	if (size == 4) {
+		LOG_DBG("Read channel 0x%02X, register 0x%02X: 0x%08X", channel, reg, *(uint32_t *)data);
+	} else if (size == 1) {
+		LOG_DBG("Read channel 0x%02X, register 0x%02X: 0x%02X", channel, reg, *(uint8_t *)data);
+	}
+	return 0;
+}
+
+static int read_uint32_register(const struct device *dev, uint8_t channel, uint8_t reg, uint32_t *data)
+{
+	return read_register(dev, channel, reg, data, sizeof(uint32_t));
+}
+
+static int read_uint8_register(const struct device *dev, uint8_t channel, uint8_t reg, uint8_t *data)
+{
+	return read_register(dev, channel, reg, data, sizeof(uint8_t));
+}
+
 static inline int seesaw_init_chip(const struct device *dev)
 {
 	const struct seesaw_config *config = dev->config;
+	struct seesaw_data *data = dev->data;
 
 	LOG_DBG("Initializing seesaw device %s", config->i2c.bus->name);
 	
 	/* Set all registers to default values */
 	if (i2c_reg_write_byte_dt(&config->i2c, SEESAW_STATUS_SWRST, 0xFF)) {
+		LOG_ERR("Failed to reset seesaw device");
 		return -EIO;
 	}
 
-	uint8_t reg;
-	reg = SEESAW_STATUS_VERSION;
-	if (i2c_write_read_dt(&config->i2c, &reg, 1,
-					(void *)&config->version, 4) < 0) {
+	// Add 100 msec delay
+ 	if( read_uint32_register(dev, SEESAW_CHAN_STATUS, SEESAW_STATUS_OPTIONS, &data->options) < 0) {
 		return -EIO;
 	}
 
-	reg = SEESAW_STATUS_OPTIONS;
-	if (i2c_write_read_dt(&config->i2c, &reg, 1,
-					(void *)&config->options, 4) < 0) {
+	if( read_uint32_register(dev, SEESAW_CHAN_STATUS, SEESAW_STATUS_VERSION, &data->version) < 0) {
+		return -EIO;
+	}	
+
+	if( read_uint8_register(dev, SEESAW_CHAN_STATUS, SEESAW_STATUS_HW_ID, &data->hw_id) < 0) {
 		return -EIO;
 	}
 
@@ -53,7 +87,7 @@ static inline int seesaw_init_chip(const struct device *dev)
 static int seesaw_init(const struct device *dev)
 {
 	const struct seesaw_config * const config = dev->config;
-
+	
 	if (!device_is_ready(config->i2c.bus)) {
 		LOG_ERR("I2C bus device not ready");
 		return -ENODEV;
@@ -69,15 +103,13 @@ static int seesaw_init(const struct device *dev)
 
 uint32_t seesaw_temperature_get(const struct device *dev)
 {
-	const struct seesaw_config *config = dev->config;
-	uint8_t temp[4], reg;
+	uint32_t temp;
 
-	reg = SEESAW_STATUS_TEMP;
-	if (i2c_write_read_dt(&config->i2c, &reg, 1, temp, 4) < 0) {
+	if (read_uint32_register(dev, SEESAW_CHAN_STATUS, SEESAW_STATUS_TEMP, &temp) < 0) {
 		return -EIO;
 	}
-
-	return sys_get_le32(temp);
+	LOG_DBG("Temperature: %d", temp);
+	return temp;
 }
 
 uint16_t seesaw_adc_channel_read(const struct device *dev, uint8_t channel)
@@ -207,4 +239,4 @@ void seesaw_gpio_pin_pull_disable(const struct device *dev, uint8_t pin)
 			      &seesaw_data_##inst, &seesaw_config_##inst, POST_KERNEL,\
 			      CONFIG_SENSOR_INIT_PRIORITY, NULL);		\
 
-DT_INST_FOREACH_STATUS_OKAY(SEESAW_DEFINE)
+ DT_INST_FOREACH_STATUS_OKAY(SEESAW_DEFINE)

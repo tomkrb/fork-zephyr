@@ -73,14 +73,14 @@ enum seesaw_adc_function {
 #define SEESAW_ADC_NUMBER_OF_CHANNELS 4
 struct seesaw_config {
 	struct i2c_dt_spec i2c;
-	uint8_t hw_id;
-	uint32_t version;
-	uint32_t options;
 };
 
 struct seesaw_data {
 	uint16_t sample_adc[SEESAW_ADC_NUMBER_OF_CHANNELS];
 	uint32_t sample_gpio;
+	uint8_t hw_id;
+	uint32_t version;
+	uint32_t options;
 };
 
 static int seesaw_init(const struct device *dev);

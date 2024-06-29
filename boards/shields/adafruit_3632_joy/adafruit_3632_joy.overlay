@@ -6,7 +6,7 @@
 
 
 &i2c0 {
-	joywing@49 {
+	joywing_seesaw: joywing@49 {
 		compatible = "adafruit,seesaw";
 		reg = <0x49>;
 	};
