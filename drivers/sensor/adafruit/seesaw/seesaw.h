@@ -8,12 +8,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#ifndef ZEPHYR_DRIVERS_SENSOR_SEESAW_SEESAW_H_
-#define ZEPHYR_DRIVERS_SENSOR_SEESAW_SEESAW_H_
+#ifndef ZEPHYR_DRIVERS_ADAFRUIT_SEESAW_SEESAW_H_
+#define ZEPHYR_DRIVERS_ADAFRUIT_SEESAW_SEESAW_H_
 
 #include <zephyr/types.h>
 #include <zephyr/drivers/i2c.h>
 #include <zephyr/sys/util.h>
+
+
+#include <zephyr/drivers/sensor/seesaw.h>
 
 enum seesaw_channel {
 	SEESAW_CHAN_STATUS = 0x00,
@@ -83,27 +86,4 @@ struct seesaw_data {
 	uint32_t options;
 };
 
-static int seesaw_init(const struct device *dev);
-
-uint32_t seesaw_temperature_get(const struct device *dev);
-
-uint16_t seesaw_adc_channel_read(const struct device *dev, uint8_t channel);
-
-void seesaw_gpio_pin_set_input(const struct device *dev, uint8_t pin);
-void seesaw_gpio_pin_set_output(const struct device *dev, uint8_t pin);
-
-void seesaw_gpio_pin_set(const struct device *dev, uint8_t pin);
-void seesaw_gpio_pin_clear(const struct device *dev, uint8_t pin);
-void seesaw_gpio_pin_toggle(const struct device *dev, uint8_t pin);
-
-uint32_t seesaw_gpio_sample_get(const struct device *dev);
-bool seesaw_gpio_pin_get(const struct device *dev, uint8_t pin);
-
-void seesaw_gpio_pin_pullup_enable(const struct device *dev, uint8_t pin);
-void seesaw_gpio_pin_pulldown_enable(const struct device *dev, uint8_t pin);
-
-void seesaw_gpio_pin_pull_disable(const struct device *dev, uint8_t pin);
-
-
-
-#endif /* ZEPHYR_DRIVERS_SENSOR_JOYWING_JOYWING_H_ */
+#endif /* ZEPHYR_DRIVERS_ADAFRUIT_SEESAW_SEESAW_H_ */
